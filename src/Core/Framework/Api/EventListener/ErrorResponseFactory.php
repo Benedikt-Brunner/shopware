@@ -2,12 +2,14 @@
 
 namespace Shopware\Core\Framework\Api\EventListener;
 
+use BackedEnum;
 use League\OAuth2\Server\Exception\OAuthServerException;
 use Shopware\Core\Framework\Log\Package;
 use Shopware\Core\Framework\ShopwareHttpException;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use UnitEnum;
 
 /**
  * @phpstan-type DefaultExceptionData array{code: string, status: string, title: string, detail: string|null, meta?: array{trace: array<int|string, mixed>, file: string, line: int, previous?: mixed}}
@@ -135,6 +137,10 @@ class ErrorResponseFactory
             $isResource = \is_resource($value) || ($value !== null && !\is_scalar($value) && !\is_array($value) && !\is_object($value));
             if ($isResource) {
                 $array[$key] = \sprintf('<%s>', get_resource_type($value));
+            }
+
+            if ($value instanceof UnitEnum && !($value instanceof BackedEnum)) {
+                $array[$key] = $value->name;
             }
         }
 

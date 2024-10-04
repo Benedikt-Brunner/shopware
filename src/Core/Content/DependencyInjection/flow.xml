@@ -24,6 +24,12 @@
             </call>
         </service>
 
+        <service id="Shopware\Core\Content\Flow\Dispatching\RealFlowDispatcher">
+            <argument type="service" id="Shopware\Core\Content\Flow\Dispatching\FlowDispatcher"/>
+            <argument type="service" id="Shopware\Core\Content\Flow\Dispatching\FlowFactory"/>
+
+            <tag name="kernel.event_subscriber"/>
+        </service>
         <service id="Shopware\Core\Content\Flow\Rule\FlowRuleScopeBuilder">
             <argument type="service" id="Shopware\Core\Checkout\Cart\Order\OrderConverter"/>
             <argument type="service" id="Shopware\Core\Checkout\Cart\Delivery\DeliveryBuilder"/>

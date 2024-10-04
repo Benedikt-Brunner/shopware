@@ -16,6 +16,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
  * @internal not intended for decoration or replacement
@@ -24,6 +25,7 @@ use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 class FlowDispatcher implements EventDispatcherInterface
 {
     private ContainerInterface $container;
+    public array $bufferedEvents = [];
 
     public function __construct(
         private readonly EventDispatcherInterface $dispatcher,
@@ -37,6 +39,7 @@ class FlowDispatcher implements EventDispatcherInterface
     {
         $this->container = $container;
     }
+
 
     /**
      * @template TEvent of object
@@ -61,6 +64,9 @@ class FlowDispatcher implements EventDispatcherInterface
         ) {
             return $event;
         }
+
+        $this->bufferedEvents[] = $event;
+        return $event;
 
         $storableFlow = $this->flowFactory->create($event);
         $this->callFlowExecutor($storableFlow);
@@ -109,7 +115,7 @@ class FlowDispatcher implements EventDispatcherInterface
         return $this->dispatcher->hasListeners($eventName);
     }
 
-    private function callFlowExecutor(StorableFlow $event): void
+    public function callFlowExecutor(StorableFlow $event): void
     {
         $flows = $this->getFlows($event->getName());
 

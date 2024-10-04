@@ -20,6 +20,8 @@ use Shopware\Core\Framework\Event\OrderAware;
 use Shopware\Core\Framework\Log\Package;
 use Shopware\Core\Framework\Rule\Rule;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
+use Symfony\Component\HttpKernel\KernelEvents;
 
 /**
  * @internal not intended for decoration or replacement
