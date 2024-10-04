@@ -26,13 +26,18 @@ class Migration1728040726AddFlowExecutionTable extends MigrationStep
         $connection->executeStatement(
             <<<SQL
                 CREATE TABLE `flow_execution` (
-                    `id` binary(16) NOT NULL,
+                    `id` binary(16) NOT NULL PRIMARY KEY,
                     `flow_id` binary(16) NOT NULL,
-                    `created_at` datetime(3) NOT NULL,
-                    `updated_At` datetime(3) NOT NULL,
-                    `trigger_context` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin NOT NULL CHECK (json_valid(`trigger_context`)),
+                    `trigger_context` JSON NOT NULl,
                     `successful` tinyint(1) NOT NULL,
-                    `error_message` text NOT NULL
+                    `error_message` text DEFAULT NULL,
+                    `created_at` datetime(3) NOT NULL DEFAULT current_timestamp(3),
+                    `updated_at` datetime(3) DEFAULT NULL,
+                    CONSTRAINT `fk.flow_execution.flow_id`
+                        FOREIGN KEY (`flow_id`)
+                        REFERENCES `flow` (`id`)
+                        ON DELETE CASCADE
+                        ON UPDATE CASCADE
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
                 SQL,
         );
