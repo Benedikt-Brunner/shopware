@@ -43,7 +43,7 @@ class FlowExecutor
         private readonly AbstractRuleLoader $ruleLoader,
         private readonly FlowRuleScopeBuilder $scopeBuilder,
         private readonly Connection $connection,
-        $actions
+        $actions,
     ) {
         $this->actions = $actions instanceof \Traversable ? iterator_to_array($actions) : $actions;
     }

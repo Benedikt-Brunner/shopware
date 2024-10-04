@@ -9,9 +9,11 @@ use Psr\EventDispatcher\StoppableEventInterface;
 use Psr\Log\LoggerInterface;
 use Shopware\Core\Content\Flow\Exception\ExecuteSequenceException;
 use Shopware\Core\Framework\Context;
+use Shopware\Core\Framework\DataAbstractionLayer\EntityRepository;
 use Shopware\Core\Framework\Event\FlowEventAware;
 use Shopware\Core\Framework\Event\FlowLogEvent;
 use Shopware\Core\Framework\Log\Package;
+use Shopware\Core\Framework\Uuid\Uuid;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\DependencyInjection\Exception\ServiceNotFoundException;
 use Symfony\Component\EventDispatcher\EventDispatcherInterface;
@@ -31,7 +33,6 @@ class FlowDispatcher implements EventDispatcherInterface
         private readonly LoggerInterface $logger,
         private readonly FlowFactory $flowFactory,
         private readonly Connection $connection,
-        #private readonly EntityRepository $flowExecutionRepository,
     ) {
     }
 
@@ -130,16 +131,18 @@ class FlowDispatcher implements EventDispatcherInterface
         }
 
         foreach ($flows as $flow) {
-            $dalPayload = [
-                'flowId' => $flow['id'],
-                'triggerContext	' => $event->data(),
+            $executionPayload = [
+                'id' => Uuid::randomBytes(),
+                'flow_id' => hex2bin($flow['id']),
+                'trigger_context' => json_encode($event->data()),
             ];
 
             try {
                 $payload = $flow['payload'];
                 $flowExecutor->execute($payload, $event);
 
-                $dalPayload['sucessful'] = '1';
+                $executionPayload['successful'] = 1;
+                $executionPayload['errorMessage'] = null;
             } catch (ExecuteSequenceException $e) {
                 $this->logger->warning(
                     "Could not execute flow with error message:\n"
@@ -150,8 +153,8 @@ class FlowDispatcher implements EventDispatcherInterface
                     . 'Error Code: ' . $e->getCode() . "\n",
                     ['exception' => $e]
                 );
-                $dalPayload['successful'] = '0';
-                $dalPayload['errorMessage'] = $e->getMessage();
+                $executionPayload['successful'] = 0;
+                $executionPayload['error_message'] = $e->getMessage();
 
                 if ($e->getPrevious() && $this->isInNestedTransaction()) {
                     /**
@@ -171,11 +174,11 @@ class FlowDispatcher implements EventDispatcherInterface
                     . 'Error Code: ' . $e->getCode() . "\n",
                     ['exception' => $e]
                 );
-                $dalPayload['successful'] = '0';
-                $dalPayload['errorMessage'] = $e->getMessage();
+                $executionPayload['successful'] = 0;
+                $executionPayload['error_message'] = $e->getMessage();
+            } finally {
+                $this->connection->insert('flow_execution', $executionPayload);
             }
-
-            $this->flowExecutionRepository->create([$dalPayload], $event->getContext());
         }
     }
 
