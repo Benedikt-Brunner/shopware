@@ -43,6 +43,7 @@
             <argument type="service" id="Shopware\Core\Content\Flow\Rule\FlowRuleScopeBuilder"/>
             <argument type="service" id="Doctrine\DBAL\Connection"/>
             <argument type="tagged_iterator" tag="flow.action" index-by="key" />
+            <!--<argument type="service" id="flow_execution.repository"/>-->
         </service>
 
         <service id="Shopware\Core\Content\Flow\Dispatching\Action\AddOrderTagAction">

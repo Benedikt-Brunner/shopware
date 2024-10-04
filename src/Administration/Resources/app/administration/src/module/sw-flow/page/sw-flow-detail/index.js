@@ -67,6 +67,10 @@ export default {
             return this.repositoryFactory.create('flow_sequence');
         },
 
+        flowExecutionRepository() {
+
+        },
+
         appFlowActionRepository() {
             return this.repositoryFactory.create('app_flow_action');
         },

@@ -26,12 +26,12 @@ class FlowDispatcher implements EventDispatcherInterface
 {
     private ContainerInterface $container;
     public array $bufferedEvents = [];
-
     public function __construct(
         private readonly EventDispatcherInterface $dispatcher,
         private readonly LoggerInterface $logger,
         private readonly FlowFactory $flowFactory,
         private readonly Connection $connection,
+        #private readonly EntityRepository $flowExecutionRepository,
     ) {
     }
 
@@ -130,9 +130,16 @@ class FlowDispatcher implements EventDispatcherInterface
         }
 
         foreach ($flows as $flow) {
+            $dalPayload = [
+                'flowId' => $flow['id'],
+                'triggerContext	' => $event->data(),
+            ];
+
             try {
                 $payload = $flow['payload'];
                 $flowExecutor->execute($payload, $event);
+
+                $dalPayload['sucessful'] = '1';
             } catch (ExecuteSequenceException $e) {
                 $this->logger->warning(
                     "Could not execute flow with error message:\n"
@@ -143,6 +150,8 @@ class FlowDispatcher implements EventDispatcherInterface
                     . 'Error Code: ' . $e->getCode() . "\n",
                     ['exception' => $e]
                 );
+                $dalPayload['successful'] = '0';
+                $dalPayload['errorMessage'] = $e->getMessage();
 
                 if ($e->getPrevious() && $this->isInNestedTransaction()) {
                     /**
@@ -162,7 +171,11 @@ class FlowDispatcher implements EventDispatcherInterface
                     . 'Error Code: ' . $e->getCode() . "\n",
                     ['exception' => $e]
                 );
+                $dalPayload['successful'] = '0';
+                $dalPayload['errorMessage'] = $e->getMessage();
             }
+
+            $this->flowExecutionRepository->create([$dalPayload], $event->getContext());
         }
     }
 
