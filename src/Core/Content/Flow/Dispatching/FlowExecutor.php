@@ -56,7 +56,6 @@ class FlowExecutor
         $state->flowId = $flow->getId();
         foreach ($flow->getSequences() as $sequence) {
             $state->delayed = false;
-
             try {
                 $this->executeSequence($sequence, $event);
             } catch (\Exception $e) {

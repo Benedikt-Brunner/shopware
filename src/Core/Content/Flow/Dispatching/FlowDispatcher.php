@@ -134,7 +134,7 @@ class FlowDispatcher implements EventDispatcherInterface
             $executionPayload = [
                 'id' => Uuid::randomBytes(),
                 'flow_id' => hex2bin($flow['id']),
-                'trigger_context' => json_encode($event->data()),
+                'trigger_context' => json_encode($event->stored()),
             ];
 
             try {
@@ -142,7 +142,7 @@ class FlowDispatcher implements EventDispatcherInterface
                 $flowExecutor->execute($payload, $event);
 
                 $executionPayload['successful'] = 1;
-                $executionPayload['errorMessage'] = null;
+                $executionPayload['error_message'] = null;
             } catch (ExecuteSequenceException $e) {
                 $this->logger->warning(
                     "Could not execute flow with error message:\n"
@@ -155,16 +155,6 @@ class FlowDispatcher implements EventDispatcherInterface
                 );
                 $executionPayload['successful'] = 0;
                 $executionPayload['error_message'] = $e->getMessage();
-
-                if ($e->getPrevious() && $this->isInNestedTransaction()) {
-                    /**
-                     * If we are already in a nested transaction, that does not have save points enabled, we must inform the caller of the rollback.
-                     * We do this via an exception, so that the outer transaction can also be rolled back.
-                     *
-                     * Otherwise, when it attempts to commit, it would fail.
-                     */
-                    throw $e->getPrevious();
-                }
             } catch (\Throwable $e) {
                 $this->logger->error(
                     "Could not execute flow with error message:\n"
@@ -177,6 +167,11 @@ class FlowDispatcher implements EventDispatcherInterface
                 $executionPayload['successful'] = 0;
                 $executionPayload['error_message'] = $e->getMessage();
             } finally {
+                if ($this->isInNestedTransaction()) {
+                    $this->handleTransactionLevelMismatch();
+                    $executionPayload['successful'] = 0;
+                    $executionPayload['error_message'] ??= 'Transaction level was not 0 after flow execution';
+                }
                 $this->connection->insert('flow_execution', $executionPayload);
             }
         }
@@ -205,6 +200,13 @@ class FlowDispatcher implements EventDispatcherInterface
 
     private function isInNestedTransaction(): bool
     {
-        return $this->connection->getTransactionNestingLevel() !== 1 && !$this->connection->getNestTransactionsWithSavepoints();
+        return $this->connection->getTransactionNestingLevel() !== 0;
+    }
+
+    private function handleTransactionLevelMismatch()
+    {
+        while ($this->isInNestedTransaction()) {
+            $this->connection->rollBack();
+        }
     }
 }
