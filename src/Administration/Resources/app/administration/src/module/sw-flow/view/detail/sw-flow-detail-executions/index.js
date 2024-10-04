@@ -1,10 +1,8 @@
-import template from './sw-flow-detail-flow.html.twig';
-import './sw-flow-detail-flow.scss';
+import template from './sw-flow-detail-flow-executions.html.twig';
+import './sw-flow-detail-flow-executions.scss';
 
-const { Component, State } = Shopware;
-const utils = Shopware.Utils;
-const { cloneDeep } = Shopware.Utils.object;
-const { mapGetters, mapState } = Component.getComponentHelper();
+const { Mixin, Data: { Criteria }, Component } = Shopware;
+const { mapState } = Component.getComponentHelper();
 
 /**
  * @private
@@ -15,245 +13,135 @@ export default {
 
     compatConfig: Shopware.compatConfig,
 
-    inject: [
-        'repositoryFactory',
-        'acl',
-        'flowActionService',
-        'ruleConditionDataProviderService',
+    inject: ['acl', 'repositoryFactory'],
+
+    emits: ['on-update-total'],
+
+    mixins: [
+        Mixin.getByName('notification'),
+        Mixin.getByName('listing'),
     ],
 
     props: {
-        isLoading: {
-            type: Boolean,
+        searchTerm: {
+            type: String,
             required: false,
-            default: false,
-        },
-        isNewFlow: {
-            type: Boolean,
-            required: false,
-            default: false,
-        },
-        isTemplate: {
-            type: Boolean,
-            required: false,
-            default: false,
-        },
-        isUnknownTrigger: {
-            type: Boolean,
-            required: false,
-            default: false,
+            default: '',
         },
     },
 
     data() {
         return {
-            flowContainerStyle: null,
+            sortBy: 'createdAt',
+            sortDirection: 'DESC',
+            total: 0,
+            isLoading: false,
+            flowExecutions: null,
+            selectedItems: [],
+        };
+    },
+
+    metaInfo() {
+        return {
+            title: this.$createTitle(),
         };
     },
 
     computed: {
-        sequenceRepository() {
-            return this.repositoryFactory.create('flow_sequence');
+        flowExecutionRepository() {
+            return this.repositoryFactory.create('flow_execution');
         },
 
-        formatSequences() {
-            return this.convertSequenceData();
-        },
+        flowExecutionCriteria() {
+            const criteria = new Criteria(this.page, this.limit);
 
-        rootSequences() {
-            return this.sequences.filter(sequence => !sequence.parentId);
-        },
-
-        showActionWarning() {
-            if (!this.triggerActions.length || !this.sequences.length) {
-                return false;
+            if (this.searchTerm) {
+                criteria.setTerm(this.searchTerm);
             }
 
-            return this.sequences.some(sequence => {
-                const { actionName, _isNew, ruleId } = sequence;
-                if (!actionName && ruleId) {
-                    return false;
-                }
+            criteria
+                .addSorting(Criteria.sort(this.sortBy, this.sortDirection))
+                .addSorting(Criteria.sort('updatedAt', 'DESC'));
 
-                return !_isNew && !this.hasAvailableAction(actionName);
-            });
+            return criteria;
         },
 
-        ...mapState('swFlowState', ['flow', 'triggerActions']),
-        ...mapGetters('swFlowState', ['sequences', 'availableActions', 'hasAvailableAction']),
+        flowExecutionColumns() {
+            return [
+                {
+                    property: 'successful',
+                    label: this.$tc('sw-flow.detail.executions.list.labelColumnSuccessful'),
+                    width: '80px',
+                    sortable: true,
+                },
+                {
+                    property: 'flowName',
+                    dataIndex: 'name',
+                    label: this.$tc('sw-flow.detail.executions.list.labelColumnName'),
+                    allowResize: true,
+                    routerLink: 'sw.flow.detail',
+                    primary: true,
+                },
+                {
+                    property: 'errorMessage',
+                    label: this.$tc('sw-flow.detail.executions.list.labelColumnErrorMessage'),
+                    allowResize: true,
+                    multiLine: true,
+                },
+                {
+                    property: 'date',
+                    label: this.$tc('sw-flow.detail.executions.list.labelColumnDate'),
+                    allowResize: true,
+                    sortable: true,
+                },
+            ];
+        },
+
+        detailPageLinkText() {
+            if (this.acl.can('flow.viewer')) {
+                return this.$tc('global.default.view');
+            }
+
+            return this.$tc('global.default.view');
+        },
+
+        assetFilter() {
+            return Shopware.Filter.getByName('asset');
+        },
+
+        ...mapState('swFlowState', ['triggerEvents']),
     },
 
     watch: {
-        rootSequences: {
-            handler(value) {
-                if (!this.flow.eventName) {
-                    return;
-                }
-
-                if (!value.length) {
-                    const sequence = this.createSequence();
-                    State.commit('swFlowState/addSequence', sequence);
-                }
-            },
-            immediate: true,
-        },
-
-        sequences: {
-            handler() {
-                const sequenceContainers = document.getElementsByName('root-sequence');
-                let maxWidth = 0;
-
-                this.$nextTick(() => {
-                    Array.from(sequenceContainers).forEach((item) => {
-                        maxWidth = item.offsetWidth > maxWidth ? item.offsetWidth : maxWidth;
-                    });
-
-                    if (maxWidth <= 870) {
-                        this.flowContainerStyle = null;
-                        return;
-                    }
-
-                    if (maxWidth > 870 && maxWidth <= 1300) {
-                        this.flowContainerStyle = { 'max-width': '1300px' };
-                        return;
-                    }
-
-                    this.flowContainerStyle = { 'max-width': '100%' };
-                });
-            },
-            immediate: true,
+        searchTerm(value) {
+            this.onSearch(value);
         },
     },
 
     created() {
-        this.createdComponent();
+        this.createComponent();
     },
 
     methods: {
-        createdComponent() {
-            if (!this.triggerActions?.length) {
-                this.getTriggerActions();
-            }
+        createComponent() {
+            this.getList();
         },
 
-        getTriggerActions() {
-            return this.flowActionService.getActions().then((actions) => {
-                State.commit('swFlowState/setTriggerActions', actions);
-            });
+        getList() {
+            this.isLoading = true;
+
+            this.flowExecutionRepository.search(this.flowExecutionCriteria)
+                .then((data) => {
+                    this.total = data.total;
+                    this.flows = data;
+                })
+                .finally(() => {
+                    this.isLoading = false;
+                });
         },
 
-        convertSequenceData() {
-            if (!this.sequences) {
-                return [];
-            }
-
-            const sequences = cloneDeep(this.sequences);
-
-            // Group sequences by its displayGroup, then those groups are arranged in ascending order.
-            const results = sequences.reduce((result, sequence) => {
-                if (!Array.isArray(result[sequence.displayGroup])) {
-                    result[sequence.displayGroup] = [];
-                }
-
-                result[sequence.displayGroup].push(sequence);
-                return result;
-            }, {});
-
-            return Object.values(results).reduce((result, item) => {
-                const rootSequence = this.convertToTreeData(item);
-
-                if (rootSequence) {
-                    result.push(rootSequence);
-                }
-
-                return result;
-            }, []);
-        },
-
-        convertToTreeData(sequences) {
-            let sequence = null;
-
-            sequences.forEach(node => {
-                // Check if node is a root sequence
-                if (!node.parentId) {
-                    sequence = node.actionName === null
-                        ? node
-                        : { ...sequence, [node.id]: node }; // Generate action groups
-                    return;
-                }
-
-                const parentIndex = sequences.findIndex(el => el.id === node.parentId);
-
-                // Skip node parent does not existed
-                if (!sequences[parentIndex]) {
-                    return;
-                }
-
-                // Child node is assigned to parent's true block or false block based on their trueCase
-                if (node.trueCase) {
-                    sequences[parentIndex].trueBlock = {
-                        ...sequences[parentIndex].trueBlock,
-                        [node.id]: node,
-                    };
-                } else {
-                    sequences[parentIndex].falseBlock = {
-                        ...sequences[parentIndex].falseBlock,
-                        [node.id]: node,
-                    };
-                }
-            });
-
-            return sequence;
-        },
-
-        createSequence() {
-            let sequence = this.sequenceRepository.create();
-            const newSequence = {
-                ...sequence,
-                parentId: null,
-                ruleId: null,
-                actionName: null,
-                config: {},
-                position: 1,
-                displayGroup: 1,
-                id: utils.createId(),
-            };
-
-            sequence = Object.assign(sequence, newSequence);
-            return sequence;
-        },
-
-        onEventChange(eventName) {
-            State.commit('swFlowState/setEventName', eventName);
-            State.commit('error/removeApiError', {
-                expression: `flow.${this.flow.id}.eventName`,
-            });
-
-            if (!this.rootSequences.length) {
-                const sequence = this.createSequence();
-                State.commit('swFlowState/addSequence', sequence);
-            }
-        },
-
-        onAddRootSequence() {
-            if (!this.acl.can('flow.editor')) {
-                return;
-            }
-
-            const newItem = this.createSequence();
-            newItem.position = 1;
-            newItem.displayGroup = this.rootSequences[this.rootSequences.length - 1].displayGroup + 1;
-
-            State.commit('swFlowState/addSequence', newItem);
-        },
-
-        getSequenceId(sequence) {
-            if (sequence.id) {
-                return sequence.displayGroup;
-            }
-
-            // In case of action sequence list, return displayGroup of first item
-            return Object.values(sequence)[0].displayGroup;
+        selectionChange(selection) {
+            this.selectedItems = Object.values(selection);
         },
     },
 };

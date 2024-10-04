@@ -70,11 +70,20 @@
         "noActions": "No actions added yet",
         "noRule": "No rule defined yet"
       },
+      "executions": {
+        "list": {
+          "labelColumnSuccessful": "Successful",
+          "labelColumnName": "Name",
+          "labelColumnErrorMessage": "Error message",
+          "labelColumnDate": "Date"
+        }
+      },
       "warningText": "This flow uses actions that are unavailable due to an edition change, inactive, uninstalled or updated extensions. When the flow is triggered, unavailable actions will not be executed."
     },
     "page": {
       "tabGeneral": "General",
-      "tabFlow": "Flow"
+      "tabFlow": "Flow",
+      "tabExecutions": "Executions"
     },
     "flowNotification": {
       "messageDeleteSuccess": "Flow deleted.",

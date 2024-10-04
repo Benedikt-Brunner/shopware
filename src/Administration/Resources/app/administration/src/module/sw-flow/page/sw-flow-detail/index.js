@@ -451,7 +451,11 @@ export default {
                 || currentRouteName === 'sw.flow.detail.general')
                 && this.flowNameError;
 
-            if (hasErrorTabFlow || hasErrorTabGeneral) {
+            const hasErrorExecutionsTab = (currentRouteName === 'sw.flow.detail.executions'
+                || currentRouteName === 'sw.flow.detail.executions')
+                && this.flowNameError;
+
+            if (hasErrorTabFlow || hasErrorTabGeneral || hasErrorExecutionsTab) {
                 return;
             }
 

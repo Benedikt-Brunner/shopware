@@ -1,148 +1,91 @@
 <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-{% block sw_flow_detail_flow %}
-<div class="sw-flow-detail-flow">
-    <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-    {% block sw_flow_detail_flow_content %}
-    <div
-        class="sw-flow-detail-flow__content"
-        :class="{'sw-flow-detail-flow-template': isTemplate }"
-        :style="flowContainerStyle"
-    >
-        <sw-alert
-            v-if="isUnknownTrigger"
-            variant="warning"
-            class="sw-flow-detail-flow__warning-unknow-trigger"
-        >
-            <p>{{ $tc('sw-flow.flowNotification.messageUnknownTriggerWarning') }}</p>
-            <p>{{ $tc('sw-flow.flowNotification.textIntroduce') }}</p>
-            <ul>
-                <li>{{ $tc('sw-flow.flowNotification.textGuide1') }}</li>
-                <li>{{ $tc('sw-flow.flowNotification.textGuide2') }}</li>
-                <li>{{ $tc('sw-flow.flowNotification.textGuide3') }}</li>
-            </ul>
-        </sw-alert>
-
-        <sw-alert
-            v-if="!isLoading && !isUnknownTrigger && showActionWarning "
-            variant="warning"
-            class="sw-flow-detail-flow__warning-box"
-        >
-            {{ $tc('sw-flow.detail.warningText') }}
-        </sw-alert>
+{% block sw_flow_detail_executions %}
+    <div class="sw-flow-list">
         <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-        {% block sw_flow_detail_trigger_card %}
-        <div class="sw-flow-detail-flow__trigger-card">
-            <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-            {% block sw_flow_detail_flow_trigger_select %}
-            <div class="sw-flow-detail-flow__trigger-select">
-                <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-                {% block sw_flow_detail_flow_single_select %}
-                <sw-flow-trigger
-                    :disabled="!acl.can('flow.editor')"
-                    :event-name="flow.eventName"
-                    :is-unknown-trigger="isUnknownTrigger"
-                    @option-select="onEventChange"
-                />
-                {% endblock %}
-            </div>
-            {% endblock %}
-
-            <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-            {% block sw_flow_detail_flow_trigger_explains %}
-            <div
-                v-if="!flow.eventName"
-                class="sw-flow-detail-flow__trigger-explain"
+        {% block sw_flow_detail_executions_list_content %}
+            <sw-card
+                class="sw-flow-detail-executions-list-card"
+                position-identifier="sw-flow-detail-executions-list-card"
             >
-                <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-                {% block sw_flow_detail_flow_trigger_explains_title %}
-                <h4>{{ $tc('sw-flow.detail.trigger.title') }}</h4>
-                {% endblock %}
-
-                <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-                {% block sw_flow_detail_flow_trigger_explains_help_text %}
-                <p v-html="$tc('sw-flow.detail.trigger.helpText')"></p>
-                {% endblock %}
-            </div>
-            {% endblock %}
-        </div>
-        {% endblock %}
-
-        <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-        {% block sw_flow_detail_flow_sequence_diagram %}
-        <div
-            v-if="flow.eventName"
-            class="sw-flow-detail-flow__sequence-diagram"
-        >
-            <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-            {% block sw_flow_detail_flow_start_line %}
-            <div class="sw-flow-detail-flow__oval"></div>
-            {% endblock %}
-
-            <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-            {% block sw_flow_detail_flow_transition_group %}
-            <transition-group
-                name="list"
-                tag="div"
-            >
-                <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-                {% block sw_flow_detail_flow_position %}
-                <div
-                    v-for="sequence in formatSequences"
-                    :key="getSequenceId(sequence)"
-                    class="sw-flow-detail-flow__position list-item"
+                <sw-entity-listing
+                    class="sw-flow-detail-executions-list__grid"
+                    :show-settings="false"
+                    :allow-column-edit="false"
+                    :allow-view="acl.can('flow.viewer')"
+                    :columns="flowExecutionColumns"
+                    :sort-by="sortBy"
+                    :sort-direction="sortDirection"
+                    :repository="flowExecutionRepository"
+                    :items="flowExecutions"
+                    :is-loading="isLoading"
+                    :full-page="false"
+                    :plain-appearance="true"
+                    @selection-change="selectionChange"
                 >
-
                     <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-                    {% block sw_flow_sequence_icon_plus %}
-                    <div
-                        class="sw-flow-detail-flow__position-plus"
-                        :disabled="!acl.can('flow.editor')"
-                        role="button"
-                        tabindex="0"
-                        @click="onAddRootSequence"
-                        @keydown.enter="onAddRootSequence"
+                    {% block sw_flow_execution_list_grid_columns %}
+
+                        <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                        {% block sw_flow_execution_list_grid_columns_successful %}
+                            <template #column-successful="{ item }">
+                                <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                                {% block sw_flow_execution_list_columns_successful_label %}
+                                    <sw-icon
+                                        size="12px"
+                                        :color="item.successful ? `#37d046` : `#de294c`"
+                                        :name="item.successful ? `regular-checkmark-xs` : `regular-times-s`"
+                                    />
+                                {% endblock %}
+                            </template>
+                        {% endblock %}
+
+                        <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                        {% block sw_flow_execution_list_columns_flow_name %}
+                            <template #column-flowName="{ item }">
+                                    <p>{{ item.flow.name }}</p>
+                            </template>
+                        {% endblock %}
+
+                        <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                        {% block sw_flow_execution_list_columns_error_message %}
+                            <template #column-errorMessage="{ item }">
+                                <p>{{ item.errorMessage }}</p>
+                            </template>
+                        {% endblock %}
+
+                        <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                        {% block sw_flow_execution_list_columns_date %}
+                            <template #column-date="{ item }">
+                                <p>{{ item.createdAt }}</p>
+                            </template>
+                        {% endblock %}
+                    {% endblock %}
+                </sw-entity-listing>
+
+                <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                {% block sw_flow_list_empty_state %}
+                    <sw-empty-state
+                        v-if="!total && !isLoading"
+                        class="sw-flow-list__empty-state"
+                        :title="$tc('sw-flow.list.emptyStateTitle')"
+                        :subline="$tc('sw-flow.list.emptyStateSubTitle')"
                     >
-                        <sw-icon
-                            small
-                            name="regular-plus-xs"
-                        />
-                    </div>
-                    {% endblock %}
-
-                    <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-                    {% block sw_flow_sequence_icon_connection %}
-                    <div class="sw-flow-detail-flow__position-connection">
-                        <sw-icon
-                            small
-                            name="regular-chevron-right-s"
-                        />
-                    </div>
-                    {% endblock %}
-
-                    <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-                    {% block sw_flow_detail_flow_sequences %}
-                    <div
-                        class="sw-flow-detail-flow__sequences"
-                    >
-                        <sw-flow-sequence
-                            name="root-sequence"
-                            :sequence="sequence"
-                            :disabled="!acl.can('flow.editor')"
-                            :is-unknown-trigger="isUnknownTrigger"
-                        />
-                    </div>
-                    {% endblock %}
-                </div>
+                        <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                        {% block sw_flow_list_empty_state_icon %}
+                            <template #icon>
+                                <img
+                                    :alt="$tc('sw-flow.list.emptyStateTitle')"
+                                    :src="assetFilter('/administration/static/img/empty-states/settings-empty-state.svg')"
+                                >
+                            </template>
+                        {% endblock %}
+                    </sw-empty-state>
                 {% endblock %}
-            </transition-group>
-            {% endblock %}
-        </div>
+
+                <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                {% block sw_flow_list_modal_content_custom %}
+                {% endblock %}
+            </sw-card>
         {% endblock %}
     </div>
-    {% endblock %}
-
-    <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-    {% block sw_flow_detail_flow_modal_extension %}
-    {% endblock %}
-</div>
 {% endblock %}

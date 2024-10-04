@@ -70,11 +70,20 @@
         "noActions": "Keine Aktionen hinzugefügt",
         "noRule": "Noch keine Regeln definiert"
       },
+      "executions": {
+        "list": {
+          "labelColumnSuccessful": "Erfolgreich",
+          "labelColumnName": "Name",
+          "errorMessage": "Fehlermeldung",
+          "labelColumnDate": "Datum"
+        }
+      },
       "warningText": "Dieser Flow verwendet Aktionen, die aufgrund einer Änderung der gebuchten Edition bzw. durch Deaktivierung oder Deinstallation der dazugehörigen Erweiterungen, nicht mehr verfügbar sind. Wenn dieser Flow ausgelöst wird, werden nicht verfügbare Aktionen nicht ausgeführt."
     },
     "page": {
       "tabGeneral": "Allgemein",
-      "tabFlow": "Flow"
+      "tabFlow": "Flow",
+      "tabExecutions": "Ausführungen"
     },
     "flowNotification": {
       "messageDeleteSuccess": "Flow gelöscht.",
