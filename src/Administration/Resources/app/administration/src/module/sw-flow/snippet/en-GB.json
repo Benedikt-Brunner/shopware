@@ -73,9 +73,10 @@
       "executions": {
         "list": {
           "labelColumnSuccessful": "Successful",
-          "labelColumnName": "Name",
+          "labelColumnFailedAction": "Failed action",
           "labelColumnErrorMessage": "Error message",
-          "labelColumnDate": "Date"
+          "labelColumnDate": "Time",
+          "actionHighlightFailedSequence": "Show failed action"
         }
       },
       "warningText": "This flow uses actions that are unavailable due to an edition change, inactive, uninstalled or updated extensions. When the flow is triggered, unavailable actions will not be executed."

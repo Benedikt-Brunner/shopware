@@ -12,6 +12,7 @@ declare(strict_types=1);
 namespace Shopware\Core\Content\Flow\Dispatching\Execution;
 
 use Shopware\Core\Checkout\Document\DocumentDefinition;
+use Shopware\Core\Content\Flow\Aggregate\FlowSequence\FlowSequenceDefinition;
 use Shopware\Core\Content\Flow\FlowDefinition;
 use Shopware\Core\Framework\DataAbstractionLayer\EntityDefinition;
 use Shopware\Core\Framework\DataAbstractionLayer\Field\BoolField;
@@ -51,9 +52,11 @@ class FlowExecutionDefinition extends EntityDefinition
 
             (new BoolField('successful', 'successful'))->addFlags(new Required()),
             (new StringField('error_message', 'errorMessage', 65535))->addFlags(new Required()),
-            (new JsonField('trigger_context', 'triggerContext'))->addFlags(new Required()),
+            (new JsonField('event_data', 'eventData'))->addFlags(new Required()),
             (new FkField('flow_id', 'flowId', FlowDefinition::class, 'id'))->addFlags(new Required()),
             new OneToOneAssociationField('flow', 'flow_id', 'id', FlowDefinition::class),
+            new FkField('failed_flow_sequence_id', 'failedFlowSequenceId', FlowSequenceDefinition::class, 'id'),
+            new OneToOneAssociationField('failedFlowSequence', 'failed_flow_sequence_id', 'id', FlowSequenceDefinition::class),
         ]);
     }
 }

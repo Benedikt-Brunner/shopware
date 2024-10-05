@@ -16,33 +16,43 @@
                     :sort-by="sortBy"
                     :sort-direction="sortDirection"
                     :repository="flowExecutionRepository"
+                    :criteria="flowExecutionCriteria"
                     :items="flowExecutions"
                     :is-loading="isLoading"
                     :full-page="false"
-                    :plain-appearance="true"
+                    :plain-appearance="false"
+                    :show-selection="false"
                     @selection-change="selectionChange"
                 >
                     <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
                     {% block sw_flow_execution_list_grid_columns %}
 
                         <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                        {% block sw_flow_execution_list_columns_date %}
+                            <template #column-date="{ item }">
+                                <sw-time-ago :date="item.createdAt" />
+                            </template>
+                        {% endblock %}
+
+                        <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
                         {% block sw_flow_execution_list_grid_columns_successful %}
-                            <template #column-successful="{ item }">
+                            <template #column-successful="{ item }" class="sw-flow-execution-list-columns-successful">
                                 <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
                                 {% block sw_flow_execution_list_columns_successful_label %}
                                     <sw-icon
                                         size="12px"
                                         :color="item.successful ? `#37d046` : `#de294c`"
                                         :name="item.successful ? `regular-checkmark-xs` : `regular-times-s`"
+                                        style="align-self: center"
                                     />
                                 {% endblock %}
                             </template>
                         {% endblock %}
 
                         <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-                        {% block sw_flow_execution_list_columns_flow_name %}
-                            <template #column-flowName="{ item }">
-                                    <p>{{ item.flow.name }}</p>
+                        {% block sw_flow_execution_list_columns_failed_action_name %}
+                            <template #column-failedActionName="{ item }">
+                                <p>{{ getActionName(item.failedFlowSequence) }}</p>
                             </template>
                         {% endblock %}
 
@@ -52,13 +62,23 @@
                                 <p>{{ item.errorMessage }}</p>
                             </template>
                         {% endblock %}
+                    {% endblock %}
 
-                        <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
-                        {% block sw_flow_execution_list_columns_date %}
-                            <template #column-date="{ item }">
-                                <p>{{ item.createdAt }}</p>
-                            </template>
-                        {% endblock %}
+                    <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                    {% block sw_flow_list_grid_actions %}
+                        <template #actions="{ item }">
+
+                            <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
+                            {% block sw_flow_list_grid_actions_highlight_failed_sequence %}
+                                <sw-context-menu-item
+                                    class="sw-flow-list__item-highlight-failed-sequence"
+                                    :disabled="!acl.can('flow.viewer') || !item.failedFlowSequence"
+                                    @click="onHighlightFailedSequence(item.failedFlowSequenceId)"
+                                >
+                                    {{ $tc('sw-flow.detail.executions.list.actionHighlightFailedSequence') }}
+                                </sw-context-menu-item>
+                            {% endblock %}
+                        </template>
                     {% endblock %}
                 </sw-entity-listing>
 

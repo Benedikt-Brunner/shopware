@@ -178,6 +178,10 @@ export default {
     },
 
     methods: {
+        didActionFail(id) {
+            return this.$route.query.failedSequenceId === id;
+        },
+
         openDynamicModal(value) {
             const appAction = this.getSelectedAppAction(value);
             if (appAction) {

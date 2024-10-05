@@ -28,8 +28,9 @@ class Migration1728040726AddFlowExecutionTable extends MigrationStep
                 CREATE TABLE `flow_execution` (
                     `id` binary(16) NOT NULL PRIMARY KEY,
                     `flow_id` binary(16) NOT NULL,
-                    `trigger_context` JSON NOT NULl,
+                    `event_data` JSON NOT NULl,
                     `successful` tinyint(1) NOT NULL,
+                    `failed_flow_sequence_id` binary(16) DEFAULT NULL,
                     `error_message` text DEFAULT NULL,
                     `created_at` datetime(3) NOT NULL DEFAULT current_timestamp(3),
                     `updated_at` datetime(3) DEFAULT NULL,
@@ -37,6 +38,11 @@ class Migration1728040726AddFlowExecutionTable extends MigrationStep
                         FOREIGN KEY (`flow_id`)
                         REFERENCES `flow` (`id`)
                         ON DELETE CASCADE
+                        ON UPDATE CASCADE,
+                    CONSTRAINT `fk.flow_execution.failed_flow_sequence_id`
+                        FOREIGN KEY (`failed_flow_sequence_id`)
+                        REFERENCES `flow_sequence` (`id`)
+                        ON DELETE SET NULL
                         ON UPDATE CASCADE
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
                 SQL,

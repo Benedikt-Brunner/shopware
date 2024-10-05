@@ -1,6 +1,12 @@
 @import "~scss/variables";
 @import "~scss/mixins";
 
+.sw-flow-detail-executions-list-card {
+    .sw-card__content{
+        padding: unset;
+    }
+}
+
 .sw-flow-detail-flow {
     &__content {
         display: flex;

@@ -90,6 +90,7 @@
                             }"
                             class="sw-flow-sequence-action__action-item"
                             :class="{'sw-flow-sequence-action__disabled': item.disabled}"
+                            :style="didActionFail(item.id) ? 'background-color: rgba(219, 18, 2, 0.9)' : ''"
                             role="button"
                             tabindex="0"
                             @click="(event) => onEditAction(item, event.target, key)"
@@ -125,7 +126,7 @@
                                     <div class="sw-flow-sequence-action__action-icon">
                                         <sw-icon
                                             v-if="!item.iconRaw"
-                                            :name="`${item.icon}`"
+                                            :name="didActionFail(item.id) ? 'regular-exclamation-triangle' : item.icon"
                                             size="12px"
                                             class="sw-icon-action"
                                         />

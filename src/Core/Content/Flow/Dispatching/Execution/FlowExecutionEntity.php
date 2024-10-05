@@ -11,6 +11,7 @@ declare(strict_types=1);
 
 namespace Shopware\Core\Content\Flow\Dispatching\Execution;
 
+use Shopware\Core\Content\Flow\Aggregate\FlowSequence\FlowSequenceEntity;
 use Shopware\Core\Content\Flow\FlowEntity;
 use Shopware\Core\Framework\DataAbstractionLayer\Contract\IdAware;
 use Shopware\Core\Framework\DataAbstractionLayer\Entity;
@@ -28,7 +29,11 @@ class FlowExecutionEntity extends Entity implements IdAware
 
     protected string $errorMessage;
 
-    protected array $triggerContext;
+    protected ?string $failedSequenceId = null;
+
+    protected ?FlowSequenceEntity $failedSequence = null;
+
+    protected array $eventData;
 
     public function getFlowId(): string
     {
@@ -70,13 +75,33 @@ class FlowExecutionEntity extends Entity implements IdAware
         $this->errorMessage = $errorMessage;
     }
 
-    public function getTriggerContext(): array
+    public function getFailedSequenceId(): ?string
     {
-        return $this->triggerContext;
+        return $this->failedSequenceId;
     }
 
-    public function setTriggerContext(array $triggerContext): void
+    public function setFailedSequenceId(?string $failedSequenceId): void
     {
-        $this->triggerContext = $triggerContext;
+        $this->failedSequenceId = $failedSequenceId;
+    }
+
+    public function getFailedSequence(): ?FlowSequenceEntity
+    {
+        return $this->failedSequence;
+    }
+
+    public function setFailedSequence(FlowSequenceEntity $failedSequence): void
+    {
+        $this->failedSequence = $failedSequence;
+    }
+
+    public function getEventData(): array
+    {
+        return $this->eventData;
+    }
+
+    public function setEventData(array $eventData): void
+    {
+        $this->eventData = $eventData;
     }
 }

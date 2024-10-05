@@ -2,7 +2,7 @@ import template from './sw-flow-detail-flow-executions.html.twig';
 import './sw-flow-detail-flow-executions.scss';
 
 const { Mixin, Data: { Criteria }, Component } = Shopware;
-const { mapState } = Component.getComponentHelper();
+const { mapState, mapGetters } = Component.getComponentHelper();
 
 /**
  * @private
@@ -13,7 +13,7 @@ export default {
 
     compatConfig: Shopware.compatConfig,
 
-    inject: ['acl', 'repositoryFactory'],
+    inject: ['acl', 'flowBuilderService', 'repositoryFactory'],
 
     emits: ['on-update-total'],
 
@@ -63,36 +63,34 @@ export default {
                 .addSorting(Criteria.sort(this.sortBy, this.sortDirection))
                 .addSorting(Criteria.sort('updatedAt', 'DESC'));
 
+            criteria
+                .addFilter(Criteria.equals('flow.id', this.flow.id));
+
             return criteria;
         },
 
         flowExecutionColumns() {
             return [
                 {
-                    property: 'successful',
-                    label: this.$tc('sw-flow.detail.executions.list.labelColumnSuccessful'),
-                    width: '80px',
+                    property: 'date',
+                    label: this.$tc('sw-flow.detail.executions.list.labelColumnDate'),
                     sortable: true,
                 },
                 {
-                    property: 'flowName',
-                    dataIndex: 'name',
-                    label: this.$tc('sw-flow.detail.executions.list.labelColumnName'),
-                    allowResize: true,
-                    routerLink: 'sw.flow.detail',
-                    primary: true,
+                    property: 'successful',
+                    label: this.$tc('sw-flow.detail.executions.list.labelColumnSuccessful'),
+                    width: '120px',
+                },
+                {
+                    property: 'failedActionName',
+                    label: this.$tc('sw-flow.detail.executions.list.labelColumnFailedAction'),
+                    sortable: false,
                 },
                 {
                     property: 'errorMessage',
                     label: this.$tc('sw-flow.detail.executions.list.labelColumnErrorMessage'),
-                    allowResize: true,
                     multiLine: true,
-                },
-                {
-                    property: 'date',
-                    label: this.$tc('sw-flow.detail.executions.list.labelColumnDate'),
-                    allowResize: true,
-                    sortable: true,
+                    sortable: false,
                 },
             ];
         },
@@ -109,7 +107,13 @@ export default {
             return Shopware.Filter.getByName('asset');
         },
 
-        ...mapState('swFlowState', ['triggerEvents']),
+        ...mapState('swFlowState', ['flow']),
+        ...mapGetters(
+            'swFlowState',
+            [
+                'getSelectedAppAction',
+            ],
+        ),
     },
 
     watch: {
@@ -133,15 +137,43 @@ export default {
             this.flowExecutionRepository.search(this.flowExecutionCriteria)
                 .then((data) => {
                     this.total = data.total;
-                    this.flows = data;
+                    this.flowExecutions = data;
                 })
                 .finally(() => {
                     this.isLoading = false;
                 });
         },
 
+        getActionName(failedFlowSequence) {
+            if (!failedFlowSequence) {
+                return '';
+            }
+
+            const failedActionName = this.getSelectedAppAction(failedFlowSequence.actionName)?.label;
+
+            if (failedActionName !== undefined) {
+                return failedActionName;
+            }
+
+            const actionTitle = this.flowBuilderService.getActionTitle(failedFlowSequence.actionName);
+
+            if (actionTitle !== null) {
+                return this.$tc(actionTitle.label);
+            }
+
+            return '';
+        },
+
         selectionChange(selection) {
             this.selectedItems = Object.values(selection);
+        },
+
+        onHighlightFailedSequence(failedSequenceId) {
+            this.$router.push({
+                name: 'sw.flow.detail.flow',
+                params: { id: this.flow.id },
+                query: { failedSequenceId },
+            });
         },
     },
 };

@@ -134,7 +134,7 @@ class FlowDispatcher implements EventDispatcherInterface
             $executionPayload = [
                 'id' => Uuid::randomBytes(),
                 'flow_id' => hex2bin($flow['id']),
-                'trigger_context' => json_encode($event->stored()),
+                'event_data' => json_encode($event->stored()),
             ];
 
             try {
@@ -143,6 +143,7 @@ class FlowDispatcher implements EventDispatcherInterface
 
                 $executionPayload['successful'] = 1;
                 $executionPayload['error_message'] = null;
+                $executionPayload['failed_flow_sequence_id'] = null;
             } catch (ExecuteSequenceException $e) {
                 $this->logger->warning(
                     "Could not execute flow with error message:\n"
@@ -155,6 +156,7 @@ class FlowDispatcher implements EventDispatcherInterface
                 );
                 $executionPayload['successful'] = 0;
                 $executionPayload['error_message'] = $e->getMessage();
+                $executionPayload['failed_flow_sequence_id'] = hex2bin($e->getSequenceId());
             } catch (\Throwable $e) {
                 $this->logger->error(
                     "Could not execute flow with error message:\n"
@@ -166,12 +168,15 @@ class FlowDispatcher implements EventDispatcherInterface
                 );
                 $executionPayload['successful'] = 0;
                 $executionPayload['error_message'] = $e->getMessage();
+                $executionPayload['failed_flow_sequence_id'] = null;
             } finally {
                 if ($this->isInNestedTransaction()) {
                     $this->handleTransactionLevelMismatch();
                     $executionPayload['successful'] = 0;
                     $executionPayload['error_message'] ??= 'Transaction level was not 0 after flow execution';
+                    $executionPayload['failed_flow_sequence_id'] = null;
                 }
+
                 $this->connection->insert('flow_execution', $executionPayload);
             }
         }
