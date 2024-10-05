@@ -89,8 +89,7 @@
                                 disabled: !item.disabled
                             }"
                             class="sw-flow-sequence-action__action-item"
-                            :class="{'sw-flow-sequence-action__disabled': item.disabled}"
-                            :style="didActionFail(item.id) ? 'background-color: rgba(219, 18, 2, 0.9)' : ''"
+                            :class="{'sw-flow-sequence-action__disabled': item.disabled, 'sw-flow-sequence-action__error': didActionFail(item.id)}"
                             role="button"
                             tabindex="0"
                             @click="(event) => onEditAction(item, event.target, key)"
@@ -129,6 +128,7 @@
                                             :name="didActionFail(item.id) ? 'regular-exclamation-triangle' : item.icon"
                                             size="12px"
                                             class="sw-icon-action"
+                                            :color="didActionFail(item.id) ? '#de294c' : ''"
                                         />
 
                                         <img

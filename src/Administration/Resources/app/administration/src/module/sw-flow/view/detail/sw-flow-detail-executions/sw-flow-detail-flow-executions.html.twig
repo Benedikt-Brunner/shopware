@@ -36,7 +36,7 @@
 
                         <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
                         {% block sw_flow_execution_list_grid_columns_successful %}
-                            <template #column-successful="{ item }" class="sw-flow-execution-list-columns-successful">
+                            <template #column-successful="{ item }">
                                 <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
                                 {% block sw_flow_execution_list_columns_successful_label %}
                                     <sw-icon
@@ -52,7 +52,12 @@
                         <!-- eslint-disable-next-line sw-deprecation-rules/no-twigjs-blocks -->
                         {% block sw_flow_execution_list_columns_failed_action_name %}
                             <template #column-failedActionName="{ item }">
-                                <p>{{ getActionName(item.failedFlowSequence) }}</p>
+                                <router-link
+                                    v-if="item.failedFlowSequenceId"
+                                    :to="{ name: 'sw.flow.detail.flow', params: { id: this.flow.id }, query: { failedSequenceId: item.failedFlowSequenceId } }"
+                                >
+                                    {{ getActionName(item.failedFlowSequence) }}
+                                </router-link>
                             </template>
                         {% endblock %}
 

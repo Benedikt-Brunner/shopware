@@ -7,6 +7,10 @@
     }
 }
 
+.sw-data-grid__cell {
+    vertical-align: top;
+}
+
 .sw-flow-detail-flow {
     &__content {
         display: flex;

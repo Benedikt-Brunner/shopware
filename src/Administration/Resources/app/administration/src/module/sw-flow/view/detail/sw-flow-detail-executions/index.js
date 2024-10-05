@@ -80,6 +80,7 @@ export default {
                     property: 'successful',
                     label: this.$tc('sw-flow.detail.executions.list.labelColumnSuccessful'),
                     width: '120px',
+                    align: 'center',
                 },
                 {
                     property: 'failedActionName',
